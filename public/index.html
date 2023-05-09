@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hääletussüsteem</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
+</head>
+<style>
+    .gradient-bg {
+        background-color: #818181;
+        background-repeat: no-repeat;
+        height: 100vh;
+        padding-top: 20rem;
+    }
+    .bg-green-500 {
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.3);
+    }
+    .shadow-box {
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.3);
+    }
+</style>
+
+<body class="gradient-bg">
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-4">Hääletussüsteem</h1>
+    <div class="flex flex-wrap -mx-2">
+        <div class="w-full md:w-1/2 px-2 mb-4">
+            <div class="shadow-box bg-white rounded-lg shadow p-4">
+                <h2 class="text-xl font-bold mb-2">Hääl</h2>
+                <form id="vote-form">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2" for="firstName">Eesnimi</label>
+                        <input class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="firstName" type="text" placeholder="Big" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2" for="lastName">Perenimi</label>
+                        <input class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="lastName" type="text" placeholder="Money" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2" for="decision">Otsus</label>
+                        <select class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="decision" required>
+                            <option value="">-- Select --</option>
+                            <option value="poolt">Poolt</option>
+                            <option value="vastu">Vastu</option>
+                        </select>
+                    </div>
+                    <button class="bg-green-500 box-shadow hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+        <div class="w-full md:w-1/2 px-2 mb-4">
+            <div class="shadow-box bg-white rounded-lg shadow p-4">
+                <h2 class="text-xl font-bold mb-2">Results</h2>
+                <p class="mb-2">Hääli kokku: <span id="total-votes"></span></p>
+                <p class="mb-2">Poolt: <span id="for-votes"></span></p>
+                <p class="mb-2">Vastu: <span id="against-votes"></span></p>
+                <p class="mb-2">Aega jäänud: <span id="time-display"></span></p>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const voteForm = document.getElementById('vote-form');
+    const totalVotes = document.getElementById('total-votes');
+    const forVotes = document.getElementById('for-votes');
+    const againstVotes = document.getElementById('against-votes');
+    const timeDisplay = document.getElementById('time-display');
+
+    voteForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const firstName = document.getElementById('firstName').value;
+        const lastName = document.getElementById('lastName').value;
+        const decision = document.getElementById('decision').value;
+
+        fetch('/vote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ firstName, lastName, decision })
+        })
+            .then(response => {
+                if (response.ok) {
+                    alert('Vote submitted successfully');
+                    voteForm.reset();
+                    updateResults();
+                } else {
+                    response.text().then(errorMessage => {
+                        console.error(errorMessage);
+                        alert('Vote submission failed: ' + errorMessage);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Vote submission failed: ' + error.message);
+            });
+    });
+
+    function updateResults() {
+        fetch('/results')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const remainingTime = Math.max(0, data.timeLeft);
+                if (remainingTime === 0) {
+                    totalVotes.textContent = data.total;
+                    forVotes.textContent = data.forCount;
+                    againstVotes.textContent = data.againstCount;
+                }
+                const minutes = Math.floor(remainingTime / 60000);
+                const seconds = Math.floor((remainingTime % 60000) / 1000);
+                const timeString = `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+                timeDisplay.textContent = timeString;
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Failed to update voting results: ' + error.message);
+            });
+    }
+
+    // Initial update of voting results
+    setInterval(updateResults, 1000);
+</script>
+</body>
+</html>

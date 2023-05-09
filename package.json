@@ -1,0 +1,19 @@
+{
+  "name": "haaletus_susteem",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mariadb": "^3.1.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.2.0",
+    "set-interval-async": "^3.0.3"
+  }
+}
